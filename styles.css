@@ -1410,3 +1410,272 @@ a {
     grid-template-columns: 1fr;
   }
 }
+<<<<<<< HEAD
+=======
+
+@media (orientation: portrait), (max-aspect-ratio: 1/1) {
+  body {
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 10% 8%, rgba(255, 255, 255, 0.62), transparent 20%),
+      radial-gradient(circle at 86% 14%, rgba(84, 212, 255, 0.42), transparent 22%),
+      radial-gradient(circle at 72% 86%, rgba(244, 71, 95, 0.24), transparent 20%),
+      linear-gradient(180deg, #bcdcff 0%, #5eaaf3 28%, #114ca5 100%);
+  }
+
+  .screen-app {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 12px;
+    padding: 12px;
+    min-height: 100vh;
+  }
+
+  .screen-app.is-portal-expanded {
+    grid-template-columns: 1fr;
+    grid-template-rows: 0 minmax(0, 1fr);
+    gap: 0;
+    padding: 8px;
+  }
+
+  .sidebar {
+    min-height: auto;
+    padding: 14px;
+    gap: 12px;
+    border-radius: 26px;
+    background:
+      linear-gradient(155deg, rgba(13, 81, 170, 0.92), rgba(9, 52, 124, 0.94)),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent);
+    box-shadow: 0 22px 44px rgba(9, 43, 101, 0.32);
+  }
+
+  .brand__logo-wrap {
+    grid-template-columns: 56px minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .brand__logo {
+    width: 56px;
+    height: 56px;
+  }
+
+  .brand h1 {
+    font-size: 1.2rem;
+    line-height: 1.2;
+    letter-spacing: 0.02em;
+  }
+
+  .brand__sub {
+    font-size: 0.88rem;
+  }
+
+  .brand__mission {
+    display: none;
+  }
+
+  .nav {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .nav__button {
+    text-align: center;
+    padding: 14px 8px;
+    min-height: 58px;
+    border-radius: 16px;
+    font-size: 0.98rem;
+    font-weight: 800;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    box-shadow: 0 12px 24px rgba(9, 40, 96, 0.22);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.1));
+  }
+
+  .nav__button::after {
+    display: none;
+  }
+
+  .nav__button:nth-child(1) {
+    background: linear-gradient(135deg, rgba(46, 174, 255, 0.48), rgba(24, 102, 214, 0.44));
+  }
+
+  .nav__button:nth-child(2) {
+    background: linear-gradient(135deg, rgba(244, 71, 95, 0.44), rgba(147, 85, 255, 0.36));
+  }
+
+  .nav__button:nth-child(3) {
+    background: linear-gradient(135deg, rgba(53, 199, 168, 0.42), rgba(27, 119, 194, 0.42));
+  }
+
+  .nav__button:nth-child(4) {
+    background: linear-gradient(135deg, rgba(255, 165, 63, 0.42), rgba(213, 99, 67, 0.36));
+  }
+
+  .nav__button:nth-child(5) {
+    background: linear-gradient(135deg, rgba(88, 138, 255, 0.44), rgba(53, 88, 205, 0.44));
+  }
+
+  .nav__button:nth-child(6) {
+    background: linear-gradient(135deg, rgba(99, 228, 255, 0.4), rgba(38, 139, 215, 0.38));
+  }
+
+  .main,
+  .view,
+  .panel--showcase,
+  .portal-panel,
+  .manage-panel {
+    min-height: 0;
+  }
+
+  .panel {
+    padding: 14px;
+    border-radius: 28px;
+    background:
+      linear-gradient(165deg, rgba(7, 66, 145, 0.86), rgba(6, 42, 103, 0.9)),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.14), transparent);
+    box-shadow: 0 26px 52px rgba(8, 36, 92, 0.3);
+  }
+
+  .panel__head {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .panel__hero {
+    max-width: none;
+  }
+
+  .panel__hero h3 {
+    font-size: 1.56rem;
+    text-shadow: 0 10px 24px rgba(5, 23, 61, 0.24);
+  }
+
+  .panel__hero p {
+    font-size: 0.92rem;
+  }
+
+  .showcase-refresh {
+    min-width: 96px;
+    background: linear-gradient(135deg, #ff6f86, #4b8ef6);
+  }
+
+  .carousel-shell {
+    min-height: 0;
+  }
+
+  .media-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    padding: 4px 46px;
+  }
+
+  .carousel-arrow {
+    width: 44px;
+    height: 44px;
+    font-size: 1.8rem;
+    background: linear-gradient(135deg, rgba(255, 121, 141, 0.92), rgba(78, 127, 244, 0.94));
+    box-shadow: 0 16px 28px rgba(8, 35, 90, 0.34);
+  }
+
+  .media-card {
+    border-radius: 22px;
+    border-color: rgba(255, 255, 255, 0.24);
+    box-shadow: 0 18px 34px rgba(8, 35, 92, 0.3);
+  }
+
+  .media-card__body--simple {
+    margin-top: -56px;
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+  }
+
+  .media-card__title {
+    font-size: 1.03rem;
+  }
+
+  .media-card__info {
+    font-size: 0.84rem;
+  }
+
+  .action-link {
+    min-height: 42px;
+    padding: 0 14px;
+    border-color: rgba(255, 255, 255, 0.24);
+    box-shadow: 0 14px 26px rgba(10, 45, 106, 0.26);
+  }
+
+  .portal-panel {
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .iframe-shell {
+    min-height: calc(100vh - 316px);
+    border-radius: 18px;
+    border: 1px solid rgba(173, 222, 255, 0.64);
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.2),
+      0 16px 30px rgba(8, 37, 95, 0.3);
+  }
+
+  .scan-panel .iframe-shell {
+    min-height: calc(100vh - 360px);
+  }
+
+  .scan-config {
+    border-radius: 14px;
+    border-color: rgba(167, 221, 255, 0.46);
+    background: linear-gradient(135deg, rgba(136, 203, 255, 0.2), rgba(87, 152, 240, 0.18));
+  }
+
+  .screen-app.is-portal-expanded .panel.portal-panel {
+    min-height: calc(100vh - 16px);
+    padding: 10px;
+  }
+
+  .screen-app.is-portal-expanded .panel.portal-panel .iframe-shell {
+    height: calc(100vh - 98px);
+    min-height: 0;
+  }
+
+  .manage-form {
+    grid-template-columns: 1fr;
+  }
+
+  .manage-list {
+    max-height: none;
+  }
+
+  .manage-modal__dialog {
+    width: calc(100vw - 24px);
+    max-height: calc(100vh - 24px);
+    padding: 14px;
+    border-radius: 24px;
+    background:
+      linear-gradient(165deg, rgba(9, 74, 160, 0.94), rgba(7, 44, 105, 0.96)),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.15), transparent);
+  }
+
+  .standby-overlay__content {
+    width: calc(100vw - 24px);
+    gap: 12px;
+  }
+
+  .standby-overlay__header h2 {
+    font-size: clamp(2rem, 5.6vw, 3.2rem);
+  }
+
+  .standby-stage {
+    min-height: 62vh;
+  }
+
+  .standby-slide {
+    grid-template-columns: 1fr;
+    min-height: 62vh;
+  }
+
+  .standby-slide__info {
+    padding: 24px;
+    gap: 12px;
+  }
+}
+>>>>>>> 589f8b2 (init: new project from tjipe)

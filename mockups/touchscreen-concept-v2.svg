@@ -1,0 +1,82 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D8EDFF"/>
+      <stop offset="0.56" stop-color="#A8D8FF"/>
+      <stop offset="1" stop-color="#82C5FF"/>
+    </linearGradient>
+    <linearGradient id="screen" x1="290" y1="76" x2="1310" y2="774" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1D56D4"/>
+      <stop offset="0.56" stop-color="#1765E9"/>
+      <stop offset="1" stop-color="#1797F3"/>
+    </linearGradient>
+    <linearGradient id="panelBlue" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#44C2FF"/>
+      <stop offset="1" stop-color="#2675F2"/>
+    </linearGradient>
+    <linearGradient id="sideBlue" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#3889FF"/>
+      <stop offset="1" stop-color="#1D54C9"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg2)"/>
+  <rect x="0" y="740" width="1600" height="160" fill="#B9DFFF" fill-opacity="0.46"/>
+  <rect x="610" y="732" width="380" height="168" rx="18" fill="url(#bg2)" fill-opacity="0.94"/>
+  <rect x="666" y="188" width="268" height="578" rx="26" fill="url(#bg2)" fill-opacity="0.92"/>
+  <rect x="694" y="764" width="212" height="102" rx="18" fill="#EAF6FF" fill-opacity="0.96"/>
+
+  <g>
+    <rect x="206" y="42" width="1188" height="748" rx="34" fill="#091422"/>
+    <rect x="226" y="62" width="1148" height="708" rx="28" fill="url(#screen)"/>
+    <rect x="226" y="62" width="1148" height="708" rx="28" stroke="#F7FBFF" stroke-opacity="0.3" stroke-width="3"/>
+
+    <image href="/Users/wexxx/Downloads/tjipe/assets/logo-main.png" x="254" y="86" width="56" height="56"/>
+    <text x="324" y="112" fill="#F5FBFF" font-size="18" font-family="PingFang SC, Microsoft YaHei, sans-serif">天津知识产权交易中心触摸展示终端</text>
+    <text x="1180" y="110" fill="#DDECFF" font-size="20" font-family="PingFang SC, Microsoft YaHei, sans-serif">2.5G</text>
+
+    <rect x="258" y="144" width="148" height="178" rx="18" fill="#2D79F0" fill-opacity="0.56" stroke="white" stroke-opacity="0.16"/>
+    <text x="286" y="198" fill="#F6FBFF" font-size="30" font-weight="700" font-family="PingFang SC, Microsoft YaHei, sans-serif">成果</text>
+    <text x="286" y="240" fill="#F6FBFF" font-size="30" font-weight="700" font-family="PingFang SC, Microsoft YaHei, sans-serif">展示</text>
+    <text x="286" y="286" fill="#D7EBFF" font-size="18" font-family="PingFang SC, Microsoft YaHei, sans-serif">Achievement</text>
+
+    <rect x="426" y="144" width="582" height="178" rx="20" fill="#2E91FF" fill-opacity="0.24" stroke="white" stroke-opacity="0.16"/>
+    <text x="458" y="198" fill="#FFFFFF" font-size="46" font-weight="700" font-family="PingFang SC, Microsoft YaHei, sans-serif">成果展示</text>
+    <text x="460" y="250" fill="#DCECFF" font-size="22" font-family="PingFang SC, Microsoft YaHei, sans-serif">视频、图片、PDF 演示资料一体化触控浏览</text>
+    <text x="460" y="286" fill="#DCECFF" font-size="20" font-family="PingFang SC, Microsoft YaHei, sans-serif">Tianjin Intellectual Property Exchange</text>
+
+    <rect x="1028" y="144" width="308" height="178" rx="18" fill="url(#sideBlue)" fill-opacity="0.92" stroke="white" stroke-opacity="0.16"/>
+    <text x="1062" y="194" fill="#F5FBFF" font-size="26" font-family="PingFang SC, Microsoft YaHei, sans-serif">资源状态</text>
+    <text x="1062" y="252" fill="white" font-size="58" font-weight="700" font-family="PingFang SC, Microsoft YaHei, sans-serif">已连接</text>
+    <text x="1062" y="294" fill="#DDEEFF" font-size="20" font-family="PingFang SC, Microsoft YaHei, sans-serif">触控一体机展示模式</text>
+
+    <rect x="258" y="346" width="430" height="154" rx="20" fill="#1D73EE" fill-opacity="0.36" stroke="white" stroke-opacity="0.14"/>
+    <rect x="708" y="346" width="302" height="154" rx="20" fill="#17A9E8" fill-opacity="0.42" stroke="white" stroke-opacity="0.14"/>
+    <rect x="1030" y="346" width="306" height="154" rx="20" fill="#3F89FF" fill-opacity="0.46" stroke="white" stroke-opacity="0.14"/>
+
+    <text x="292" y="398" fill="white" font-size="34" font-weight="700" font-family="PingFang SC, Microsoft YaHei, sans-serif">视频主展区</text>
+    <text x="292" y="438" fill="#DCECFF" font-size="20" font-family="PingFang SC, Microsoft YaHei, sans-serif">全屏触控播放 / 首帧预览</text>
+    <rect x="292" y="452" width="124" height="30" rx="15" fill="white" fill-opacity="0.16"/>
+    <text x="322" y="473" fill="#F7FBFF" font-size="16" font-family="PingFang SC, Microsoft YaHei, sans-serif">Touch Preview</text>
+
+    <text x="740" y="398" fill="white" font-size="32" font-weight="700" font-family="PingFang SC, Microsoft YaHei, sans-serif">图片成果</text>
+    <text x="740" y="438" fill="#DCECFF" font-size="20" font-family="PingFang SC, Microsoft YaHei, sans-serif">图文案例 / 展陈海报</text>
+
+    <text x="1062" y="398" fill="white" font-size="32" font-weight="700" font-family="PingFang SC, Microsoft YaHei, sans-serif">PDF 演示</text>
+    <text x="1062" y="438" fill="#DCECFF" font-size="20" font-family="PingFang SC, Microsoft YaHei, sans-serif">本页预览 / 触控翻阅</text>
+
+    <rect x="258" y="522" width="750" height="206" rx="22" fill="#103F91" fill-opacity="0.42" stroke="white" stroke-opacity="0.14"/>
+    <rect x="1028" y="522" width="308" height="206" rx="22" fill="#2157C8" fill-opacity="0.52" stroke="white" stroke-opacity="0.14"/>
+
+    <rect x="286" y="548" width="696" height="110" rx="18" fill="#0D2A61" fill-opacity="0.52" stroke="white" stroke-opacity="0.12"/>
+    <circle cx="634" cy="604" r="34" fill="white" fill-opacity="0.16" stroke="white" stroke-opacity="0.2"/>
+    <path d="M624 588L624 620L650 604L624 588Z" fill="white"/>
+    <text x="310" y="696" fill="white" font-size="34" font-weight="700" font-family="PingFang SC, Microsoft YaHei, sans-serif">沉浸式成果瀑布卡片区</text>
+
+    <text x="1060" y="576" fill="white" font-size="30" font-weight="700" font-family="PingFang SC, Microsoft YaHei, sans-serif">快捷入口</text>
+    <rect x="1060" y="596" width="242" height="40" rx="18" fill="white" fill-opacity="0.12"/>
+    <rect x="1060" y="646" width="242" height="40" rx="18" fill="white" fill-opacity="0.12"/>
+    <text x="1116" y="622" fill="#F7FBFF" font-size="20" font-family="PingFang SC, Microsoft YaHei, sans-serif">交易项目查询</text>
+    <text x="1086" y="672" fill="#F7FBFF" font-size="20" font-family="PingFang SC, Microsoft YaHei, sans-serif">数据知识产权登记</text>
+  </g>
+</svg>

@@ -2,3 +2,10 @@ node_modules/
 src-tauri/target/
 .DS_Store
 windows-package/
+
+node_modules/
+web-dist/
+src-tauri/target/
+windows-package/
+*.log
+.DS_Store
