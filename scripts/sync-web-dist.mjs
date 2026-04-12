@@ -6,11 +6,10 @@ const dist = resolve(root, "web-dist");
 
 mkdirSync(dist, { recursive: true });
 
-for (const file of ["index.html", "app.js", "styles.css", "tauri-bridge.js"]) {
+for (const file of ["index.html", "app.js", "styles.css", "tauri-bridge.js", "mobile-upload.html"]) {
   cpSync(resolve(root, file), resolve(dist, file), { force: true });
 }
 
 if (existsSync(resolve(root, "assets"))) {
   cpSync(resolve(root, "assets"), resolve(dist, "assets"), { recursive: true, force: true });
 }
-

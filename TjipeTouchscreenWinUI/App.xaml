@@ -1,0 +1,78 @@
+<Application
+    x:Class="TjipeTouchscreenWinUI.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Default">
+                    <LinearGradientBrush x:Key="ShellBackgroundBrush" StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Color="#FFF4F8FF" Offset="0.0" />
+                        <GradientStop Color="#FFDCEBFF" Offset="0.52" />
+                        <GradientStop Color="#FFC9E0FF" Offset="1.0" />
+                    </LinearGradientBrush>
+                    <SolidColorBrush x:Key="HeroPanelBrush" Color="#F7FFFFFF" />
+                    <SolidColorBrush x:Key="CardPanelBrush" Color="#F3FFFFFF" />
+                    <SolidColorBrush x:Key="AccentSoftBrush" Color="#1A0A64E8" />
+                    <SolidColorBrush x:Key="AccentLineBrush" Color="#260A64E8" />
+                    <SolidColorBrush x:Key="TextStrongBrush" Color="#FF16304B" />
+                    <SolidColorBrush x:Key="TextSoftBrush" Color="#FF60728F" />
+                    <SolidColorBrush x:Key="TileBlueBrush" Color="#FF0A64E8" />
+                    <SolidColorBrush x:Key="TileTealBrush" Color="#FF008AA6" />
+                    <SolidColorBrush x:Key="TileGoldBrush" Color="#FFB86A00" />
+                    <SolidColorBrush x:Key="TileSlateBrush" Color="#FF3B5A82" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <LinearGradientBrush x:Key="ShellBackgroundBrush" StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Color="#FF06111F" Offset="0.0" />
+                        <GradientStop Color="#FF0B213B" Offset="0.55" />
+                        <GradientStop Color="#FF133B63" Offset="1.0" />
+                    </LinearGradientBrush>
+                    <SolidColorBrush x:Key="HeroPanelBrush" Color="#1AEAF4FF" />
+                    <SolidColorBrush x:Key="CardPanelBrush" Color="#12F2F7FF" />
+                    <SolidColorBrush x:Key="AccentSoftBrush" Color="#33A7CBFF" />
+                    <SolidColorBrush x:Key="AccentLineBrush" Color="#3377B7FF" />
+                    <SolidColorBrush x:Key="TextStrongBrush" Color="#FFF5FAFF" />
+                    <SolidColorBrush x:Key="TextSoftBrush" Color="#FFBCD0E6" />
+                    <SolidColorBrush x:Key="TileBlueBrush" Color="#FF4BB6FF" />
+                    <SolidColorBrush x:Key="TileTealBrush" Color="#FF42D2D1" />
+                    <SolidColorBrush x:Key="TileGoldBrush" Color="#FFFFC05A" />
+                    <SolidColorBrush x:Key="TileSlateBrush" Color="#FF9DB9D8" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+
+            <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="28" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Foreground" Value="{ThemeResource TextStrongBrush}" />
+            </Style>
+
+            <Style x:Key="BodyCaptionStyle" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="15" />
+                <Setter Property="TextWrapping" Value="Wrap" />
+                <Setter Property="Foreground" Value="{ThemeResource TextSoftBrush}" />
+            </Style>
+
+            <Style x:Key="PanelCardStyle" TargetType="Border">
+                <Setter Property="CornerRadius" Value="28" />
+                <Setter Property="Background" Value="{ThemeResource CardPanelBrush}" />
+                <Setter Property="BorderBrush" Value="{ThemeResource AccentLineBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Padding" Value="24" />
+            </Style>
+
+            <Style x:Key="MetricCardStyle" TargetType="Border" BasedOn="{StaticResource PanelCardStyle}">
+                <Setter Property="Padding" Value="20" />
+            </Style>
+
+            <Style x:Key="HeroButtonStyle" TargetType="Button">
+                <Setter Property="Padding" Value="20,16" />
+                <Setter Property="CornerRadius" Value="22" />
+                <Setter Property="MinHeight" Value="76" />
+                <Setter Property="HorizontalAlignment" Value="Stretch" />
+                <Setter Property="FontSize" Value="18" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+            </Style>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

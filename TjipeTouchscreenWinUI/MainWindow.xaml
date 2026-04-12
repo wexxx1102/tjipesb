@@ -1,0 +1,285 @@
+<Window
+    x:Class="TjipeTouchscreenWinUI.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:models="using:TjipeTouchscreenWinUI.Models"
+    mc:Ignorable="d"
+    Title="天津知识产权交易中心触摸屏">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <Grid Background="{ThemeResource ShellBackgroundBrush}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Grid Margin="36,28,36,20">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0"
+                        Style="{StaticResource PanelCardStyle}"
+                        Background="{ThemeResource HeroPanelBrush}"
+                        Padding="28">
+                    <StackPanel Spacing="24">
+                        <Grid ColumnSpacing="18">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="88" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <Border Width="88"
+                                    Height="88"
+                                    CornerRadius="28"
+                                    Background="{ThemeResource AccentSoftBrush}">
+                                <Image Source="Assets/logo-main.png"
+                                       Stretch="Uniform"
+                                       Margin="14" />
+                            </Border>
+
+                            <StackPanel Grid.Column="1" Spacing="6" VerticalAlignment="Center">
+                                <TextBlock Text="天津知识产权交易中心"
+                                           FontSize="17"
+                                           FontWeight="SemiBold"
+                                           Foreground="{ThemeResource TileBlueBrush}" />
+                                <TextBlock Text="竖版触摸大屏导览"
+                                           FontSize="36"
+                                           FontWeight="Bold"
+                                           Foreground="{ThemeResource TextStrongBrush}" />
+                                <TextBlock Text="围绕成果展示、项目查询、数据登记和现场引导做了更适合 27-32 寸竖屏的单列式触控布局。"
+                                           Style="{StaticResource BodyCaptionStyle}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Spacing="10" HorizontalAlignment="Right">
+                                <Border Padding="16,10"
+                                        CornerRadius="18"
+                                        Background="{ThemeResource AccentSoftBrush}">
+                                    <StackPanel>
+                                        <TextBlock Text="当前时间"
+                                                   FontSize="14"
+                                                   Foreground="{ThemeResource TextSoftBrush}" />
+                                        <TextBlock x:Name="CurrentTimeText"
+                                                   FontSize="22"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{ThemeResource TextStrongBrush}" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Padding="16,10"
+                                        CornerRadius="18"
+                                        Background="{ThemeResource AccentSoftBrush}">
+                                    <TextBlock Text="推荐分辨率 1080 × 1920"
+                                               FontSize="15"
+                                               FontWeight="SemiBold"
+                                               Foreground="{ThemeResource TextStrongBrush}" />
+                                </Border>
+                            </StackPanel>
+                        </Grid>
+
+                        <Grid ColumnSpacing="14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Border Grid.Column="0" Style="{StaticResource MetricCardStyle}">
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="成果内容"
+                                               Style="{StaticResource BodyCaptionStyle}" />
+                                    <TextBlock Text="视频 / 图片 / PPT / PDF"
+                                               FontSize="22"
+                                               FontWeight="SemiBold"
+                                               Foreground="{ThemeResource TextStrongBrush}" />
+                                    <TextBlock Text="支持轮播与沉浸式全屏预览"
+                                               Style="{StaticResource BodyCaptionStyle}" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Column="1" Style="{StaticResource MetricCardStyle}">
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="入口操作"
+                                               Style="{StaticResource BodyCaptionStyle}" />
+                                    <TextBlock Text="大尺寸触摸按钮"
+                                               FontSize="22"
+                                               FontWeight="SemiBold"
+                                               Foreground="{ThemeResource TextStrongBrush}" />
+                                    <TextBlock Text="减小误触，适配站立式浏览节奏"
+                                               Style="{StaticResource BodyCaptionStyle}" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Column="2" Style="{StaticResource MetricCardStyle}">
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="现场运行"
+                                               Style="{StaticResource BodyCaptionStyle}" />
+                                    <TextBlock Text="Kiosk First"
+                                               FontSize="22"
+                                               FontWeight="SemiBold"
+                                               Foreground="{ThemeResource TextStrongBrush}" />
+                                    <TextBlock Text="保留本地直启思路，适合展厅与大厅导览"
+                                               Style="{StaticResource BodyCaptionStyle}" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                        <CommandBar DefaultLabelPosition="Bottom"
+                                    OverflowButtonVisibility="Collapsed"
+                                    IsDynamicOverflowEnabled="False">
+                            <AppBarButton Label="成果展区">
+                                <AppBarButton.Icon>
+                                    <SymbolIcon Symbol="Library" />
+                                </AppBarButton.Icon>
+                            </AppBarButton>
+                            <AppBarButton Label="项目查询">
+                                <AppBarButton.Icon>
+                                    <SymbolIcon Symbol="Find" />
+                                </AppBarButton.Icon>
+                            </AppBarButton>
+                            <AppBarButton Label="数据登记">
+                                <AppBarButton.Icon>
+                                    <SymbolIcon Symbol="Bullets" />
+                                </AppBarButton.Icon>
+                            </AppBarButton>
+                            <AppBarButton Label="宣传短片">
+                                <AppBarButton.Icon>
+                                    <SymbolIcon Symbol="Video" />
+                                </AppBarButton.Icon>
+                            </AppBarButton>
+                        </CommandBar>
+                    </StackPanel>
+                </Border>
+
+                <StackPanel Grid.Row="1" Margin="0,22,0,0" Spacing="22">
+                    <Border Style="{StaticResource PanelCardStyle}">
+                        <StackPanel Spacing="18">
+                            <TextBlock Text="快捷入口" Style="{StaticResource SectionTitleStyle}" />
+                            <TextBlock Text="首页第一屏直接给出最常用的四个动作，点击区足够大，适合竖版触控屏快速分流。"
+                                       Style="{StaticResource BodyCaptionStyle}" />
+
+                            <ItemsControl ItemsSource="{x:Bind QuickActions}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="models:QuickAction">
+                                        <Button Style="{StaticResource HeroButtonStyle}" Margin="0,0,0,12">
+                                            <Grid ColumnSpacing="14">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="44" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <FontIcon Glyph="{x:Bind Glyph}"
+                                                          FontSize="24"
+                                                          Foreground="{ThemeResource TileBlueBrush}" />
+                                                <StackPanel Grid.Column="1" Spacing="4">
+                                                    <TextBlock Text="{x:Bind Title}" FontSize="22" FontWeight="SemiBold" />
+                                                    <TextBlock Text="{x:Bind Description}" Style="{StaticResource BodyCaptionStyle}" />
+                                                </StackPanel>
+                                                <Border Grid.Column="2"
+                                                        Padding="12,6"
+                                                        CornerRadius="16"
+                                                        Background="{ThemeResource AccentSoftBrush}"
+                                                        VerticalAlignment="Center">
+                                                    <TextBlock Text="{x:Bind Status}"
+                                                               FontSize="14"
+                                                               FontWeight="SemiBold"
+                                                               Foreground="{ThemeResource TextStrongBrush}" />
+                                                </Border>
+                                            </Grid>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource PanelCardStyle}">
+                        <StackPanel Spacing="18">
+                            <TextBlock Text="重点展区" Style="{StaticResource SectionTitleStyle}" />
+                            <ItemsControl ItemsSource="{x:Bind SpotlightCards}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="models:DashboardCard">
+                                        <Border Margin="0,0,0,14"
+                                                Padding="22"
+                                                CornerRadius="24"
+                                                Background="{ThemeResource AccentSoftBrush}">
+                                            <StackPanel Spacing="12">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Spacing="4">
+                                                        <TextBlock Text="{x:Bind Eyebrow}"
+                                                                   FontSize="14"
+                                                                   FontWeight="SemiBold"
+                                                                   Foreground="{ThemeResource TileBlueBrush}" />
+                                                        <TextBlock Text="{x:Bind Title}"
+                                                                   FontSize="26"
+                                                                   FontWeight="SemiBold"
+                                                                   Foreground="{ThemeResource TextStrongBrush}" />
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
+                                                        <FontIcon Glyph="{x:Bind Glyph}"
+                                                                  FontSize="24"
+                                                                  Foreground="{ThemeResource TileBlueBrush}" />
+                                                        <TextBlock Text="{x:Bind Metric}"
+                                                                   FontSize="24"
+                                                                   FontWeight="Bold"
+                                                                   Foreground="{ThemeResource TextStrongBrush}" />
+                                                    </StackPanel>
+                                                </Grid>
+                                                <TextBlock Text="{x:Bind Summary}" Style="{StaticResource BodyCaptionStyle}" />
+                                                <TextBlock Text="{x:Bind Footer}"
+                                                           FontSize="15"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{ThemeResource TextStrongBrush}" />
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource PanelCardStyle}">
+                        <StackPanel Spacing="18">
+                            <TextBlock Text="运营提示" Style="{StaticResource SectionTitleStyle}" />
+                            <ItemsControl ItemsSource="{x:Bind ActivityFeed}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="models:ActivityItem">
+                                        <Grid Margin="0,0,0,14" ColumnSpacing="14">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="112" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <Border Padding="14,10"
+                                                    CornerRadius="18"
+                                                    Background="{ThemeResource AccentSoftBrush}">
+                                                <TextBlock Text="{x:Bind Time}"
+                                                           HorizontalAlignment="Center"
+                                                           FontSize="15"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{ThemeResource TextStrongBrush}" />
+                                            </Border>
+                                            <StackPanel Grid.Column="1" Spacing="4">
+                                                <TextBlock Text="{x:Bind Title}"
+                                                           FontSize="20"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{ThemeResource TextStrongBrush}" />
+                                                <TextBlock Text="{x:Bind Description}" Style="{StaticResource BodyCaptionStyle}" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </ScrollViewer>
+</Window>

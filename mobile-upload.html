@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>宣传物料上传</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #07111f;
+        --panel: rgba(9, 27, 50, 0.92);
+        --panel-soft: rgba(11, 36, 65, 0.88);
+        --line: rgba(109, 186, 255, 0.18);
+        --text: #f2f8ff;
+        --muted: rgba(214, 233, 255, 0.78);
+        --accent: #169dff;
+        --accent-strong: #0078f2;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at 20% 12%, rgba(90, 192, 255, 0.18), transparent 24%),
+          radial-gradient(circle at 80% 16%, rgba(0, 120, 255, 0.18), transparent 28%),
+          linear-gradient(180deg, #07111f 0%, #0b1f38 32%, #0b274a 100%);
+        padding: 18px;
+      }
+
+      .shell {
+        max-width: 720px;
+        margin: 0 auto;
+        display: grid;
+        gap: 16px;
+      }
+
+      .hero,
+      .panel {
+        border-radius: 24px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.28);
+      }
+
+      .hero {
+        padding: 24px 22px;
+        background:
+          linear-gradient(135deg, rgba(0, 120, 215, 0.96), rgba(0, 159, 227, 0.88) 56%, rgba(87, 205, 255, 0.72)),
+          linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0));
+      }
+
+      .hero h1,
+      .panel h2 {
+        margin: 0;
+      }
+
+      .hero p,
+      .status,
+      .tips li {
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      .hero p {
+        margin: 10px 0 0;
+      }
+
+      .panel {
+        padding: 20px;
+        display: grid;
+        gap: 14px;
+      }
+
+      form {
+        display: grid;
+        gap: 12px;
+      }
+
+      label {
+        display: grid;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      input,
+      textarea,
+      button {
+        font: inherit;
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        border-radius: 14px;
+        border: 1px solid var(--line);
+        background: var(--panel-soft);
+        color: var(--text);
+        padding: 12px 14px;
+      }
+
+      textarea {
+        min-height: 110px;
+        resize: vertical;
+      }
+
+      .button {
+        min-height: 46px;
+        border: 0;
+        border-radius: 14px;
+        color: #fff;
+        font-weight: 700;
+        background: linear-gradient(180deg, var(--accent), var(--accent-strong));
+      }
+
+      .tips {
+        margin: 0;
+        padding-left: 18px;
+        display: grid;
+        gap: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <h1>宣传物料上传</h1>
+        <p>手机端上传的图片、视频和演示资料将用于大屏待机轮播展示。</p>
+      </section>
+
+      <section class="panel">
+        <h2>上传物料</h2>
+        <form id="promoUploadForm">
+          <label>
+            <span>选择文件</span>
+            <input id="promoFile" name="file" type="file" accept=".mp4,.webm,.mov,.m4v,.jpg,.jpeg,.png,.gif,.webp,.bmp,.ppt,.pptx,.pps,.ppsx,.pdf" required />
+          </label>
+          <label>
+            <span>物料标题</span>
+            <input id="promoTitle" name="title" type="text" placeholder="请输入宣传物料标题" required />
+          </label>
+          <label>
+            <span>物料说明</span>
+            <textarea id="promoDescription" name="description" placeholder="可填写活动信息、宣传语或播放说明"></textarea>
+          </label>
+          <button class="button" type="submit">上传到大屏</button>
+        </form>
+        <p id="promoStatus" class="status">请选择文件后上传。</p>
+      </section>
+
+      <section class="panel">
+        <h2>上传说明</h2>
+        <ul class="tips">
+          <li>支持图片、视频、PDF 与演示文件。</li>
+          <li>上传成功后，物料会进入大屏待机轮播列表。</li>
+          <li>建议使用横向宣传图、短视频或导出的 PDF 演示资料。</li>
+        </ul>
+      </section>
+    </main>
+
+    <script>
+      const form = document.querySelector("#promoUploadForm");
+      const fileInput = document.querySelector("#promoFile");
+      const titleInput = document.querySelector("#promoTitle");
+      const status = document.querySelector("#promoStatus");
+
+      form?.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const file = fileInput?.files?.[0];
+        const title = titleInput?.value?.trim();
+        if (!file || !title) {
+          status.textContent = "请选择文件并填写标题。";
+          return;
+        }
+
+        const formData = new FormData(form);
+        status.textContent = "上传中，请稍候...";
+
+        try {
+          const response = await fetch("/api/promotions/upload", {
+            method: "POST",
+            body: formData,
+          });
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok || !payload.ok) {
+            throw new Error(payload.error || "上传失败");
+          }
+          form.reset();
+          status.textContent = "上传成功，宣传物料已推送到大屏待机展示。";
+        } catch (error) {
+          status.textContent = `上传失败：${error instanceof Error ? error.message : String(error)}`;
+        }
+      });
+    </script>
+  </body>
+</html>

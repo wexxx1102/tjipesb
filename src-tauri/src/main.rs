@@ -2,7 +2,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
 use std::fs;
-use std::io::Write;
+use std::io::{Read, Write};
+use std::net::{TcpListener, TcpStream, UdpSocket};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::Mutex;
@@ -24,8 +25,11 @@ struct MediaItem {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 struct MediaPayload {
     items: Vec<MediaItem>,
+    promotions: Vec<MediaItem>,
+    mobile_upload: MobileUploadConfig,
 }
 
 #[derive(Clone, Serialize, Deserialize, Default)]
@@ -52,9 +56,23 @@ struct ActionResult {
     ok: bool,
 }
 
+#[derive(Clone, Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+struct MobileUploadConfig {
+    upload_page_url: String,
+    qr_image_url: String,
+    display_host: String,
+    available: bool,
+    reason: String,
+}
+
 const ACHIEVEMENT_META_FILE: &str = "achievement_meta.json";
 const POSTER_FOLDER: &str = "posters";
+const PROMOTION_FOLDER: &str = "promotions";
+const PROMOTION_META_FILE: &str = "promotion_meta.json";
+const PROMOTION_POSTER_FOLDER: &str = "promotion_posters";
 const PORTAL_LABEL: &str = "portal";
+const MOBILE_UPLOAD_HTML: &str = include_str!("../../mobile-upload.html");
 
 #[derive(Default)]
 struct PortalStore {
@@ -64,6 +82,11 @@ struct PortalStore {
 #[derive(Default, Clone)]
 struct PortalState {
     home_url: String,
+}
+
+#[derive(Default)]
+struct MobileUploadState {
+    port: Mutex<u16>,
 }
 
 fn resources_dir(app: &tauri::AppHandle) -> PathBuf {
@@ -121,6 +144,8 @@ fn initialize_resources(app: &tauri::AppHandle) -> Result<(), String> {
         fs::create_dir_all(writable.join(folder)).map_err(|error| error.to_string())?;
     }
     fs::create_dir_all(writable.join(POSTER_FOLDER)).map_err(|error| error.to_string())?;
+    fs::create_dir_all(writable.join(PROMOTION_FOLDER)).map_err(|error| error.to_string())?;
+    fs::create_dir_all(writable.join(PROMOTION_POSTER_FOLDER)).map_err(|error| error.to_string())?;
 
     let should_seed = !has_any_media(&writable) && !writable.join(ACHIEVEMENT_META_FILE).exists();
     if !should_seed {
@@ -143,6 +168,50 @@ fn initialize_resources(app: &tauri::AppHandle) -> Result<(), String> {
     }
 
     Ok(())
+}
+
+fn detect_lan_ip() -> String {
+    if let Ok(socket) = UdpSocket::bind("0.0.0.0:0") {
+        if socket.connect("8.8.8.8:80").is_ok() {
+            if let Ok(addr) = socket.local_addr() {
+                let ip = addr.ip().to_string();
+                if !ip.starts_with("127.") {
+                    return ip;
+                }
+            }
+        }
+    }
+    "127.0.0.1".to_string()
+}
+
+fn build_mobile_upload_config(port: u16) -> MobileUploadConfig {
+    let host = detect_lan_ip();
+    let available = port > 0 && !host.starts_with("127.");
+    let upload_page_url = format!("http://{host}:{port}/mobile-upload.html");
+    let encoded = upload_page_url
+        .bytes()
+        .map(|byte| match byte {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => char::from(byte).to_string(),
+            _ => format!("%{byte:02X}"),
+        })
+        .collect::<String>();
+    let qr_image_url = if available {
+        format!("https://api.qrserver.com/v1/create-qr-code/?size=280x280&data={encoded}")
+    } else {
+        String::new()
+    };
+
+    MobileUploadConfig {
+        upload_page_url,
+        qr_image_url,
+        display_host: host.clone(),
+        available,
+        reason: if available {
+            String::new()
+        } else {
+            "当前设备未获取到可供手机访问的局域网地址，请连接局域网后刷新。".to_string()
+        },
+    }
 }
 
 fn normalize_portal_url(url: &str) -> Result<String, String> {
@@ -331,6 +400,34 @@ fn save_achievement_meta(resources: &Path, payload: &HashMap<String, Achievement
     fs::write(path, body).map_err(|error| error.to_string())
 }
 
+fn save_promotion_meta(resources: &Path, payload: &HashMap<String, AchievementMeta>) -> Result<(), String> {
+    fs::create_dir_all(resources).map_err(|error| error.to_string())?;
+    let path = resources.join(PROMOTION_META_FILE);
+    let body = serde_json::to_string_pretty(payload).map_err(|error| error.to_string())?;
+    fs::write(path, body).map_err(|error| error.to_string())
+}
+
+fn load_promotion_meta(resources: &Path) -> HashMap<String, AchievementMeta> {
+    let path = resources.join(PROMOTION_META_FILE);
+    if !path.exists() {
+        return HashMap::new();
+    }
+
+    let content = match fs::read_to_string(path) {
+        Ok(value) => value,
+        Err(_) => return HashMap::new(),
+    };
+
+    let parsed: Result<Value, _> = serde_json::from_str(&content);
+    let Some(map) = parsed.ok().and_then(|value| value.as_object().cloned()) else {
+        return HashMap::new();
+    };
+
+    map.into_iter()
+        .filter_map(|(key, value)| serde_json::from_value::<AchievementMeta>(value).ok().map(|meta| (key, meta)))
+        .collect()
+}
+
 fn find_video_poster(resources: &Path, video_name: &str) -> String {
     let stem = Path::new(video_name)
         .file_stem()
@@ -360,6 +457,25 @@ fn find_video_poster(resources: &Path, video_name: &str) -> String {
     String::new()
 }
 
+fn find_promotion_poster(resources: &Path, video_name: &str) -> String {
+    let stem = Path::new(video_name)
+        .file_stem()
+        .and_then(|value| value.to_str())
+        .unwrap_or_default();
+
+    let poster_dir = resources.join(PROMOTION_POSTER_FOLDER);
+    if poster_dir.exists() {
+        for extension in ["jpg", "jpeg", "png", "gif", "webp", "bmp"] {
+            let candidate = poster_dir.join(format!("{stem}.{extension}"));
+            if candidate.exists() {
+                return candidate.to_string_lossy().to_string();
+            }
+        }
+    }
+
+    String::new()
+}
+
 fn save_video_poster(resources: &Path, video_name: &str, poster_data: &[u8]) -> Result<(), String> {
     if poster_data.is_empty() {
         return Ok(());
@@ -378,6 +494,42 @@ fn save_video_poster(resources: &Path, video_name: &str, poster_data: &[u8]) -> 
     fs::create_dir_all(&poster_dir).map_err(|error| error.to_string())?;
     let poster_path = poster_dir.join(format!("{stem}.jpg"));
     fs::write(poster_path, poster_data).map_err(|error| error.to_string())
+}
+
+fn try_generate_promotion_poster(resources: &Path, saved_video_path: &Path, video_name: &str) {
+    if !find_promotion_poster(resources, video_name).is_empty() {
+        return;
+    }
+
+    let stem = Path::new(video_name)
+        .file_stem()
+        .and_then(|value| value.to_str())
+        .unwrap_or_default();
+    if stem.is_empty() {
+        return;
+    }
+
+    let poster_dir = resources.join(PROMOTION_POSTER_FOLDER);
+    if fs::create_dir_all(&poster_dir).is_err() {
+        return;
+    }
+
+    let poster_path = poster_dir.join(format!("{stem}.jpg"));
+    let input = saved_video_path.to_string_lossy().to_string();
+    let output = poster_path.to_string_lossy().to_string();
+    let attempts: Vec<Vec<&str>> = vec![
+        vec!["-y", "-ss", "0.20", "-i", &input, "-frames:v", "1", "-q:v", "2", &output],
+        vec!["-y", "-i", &input, "-frames:v", "1", "-q:v", "2", &output],
+    ];
+
+    for args in attempts {
+        let status = Command::new("ffmpeg").args(args).stdout(std::process::Stdio::null()).stderr(std::process::Stdio::null()).status();
+        if let Ok(exit) = status {
+            if exit.success() && poster_path.exists() {
+                return;
+            }
+        }
+    }
 }
 
 fn try_generate_video_poster(resources: &Path, saved_video_path: &Path, video_name: &str) {
@@ -596,11 +748,13 @@ fn portal_close(app: tauri::AppHandle) -> Result<ActionResult, String> {
 }
 
 #[tauri::command]
-fn list_media(app: tauri::AppHandle) -> Result<MediaPayload, String> {
+fn list_media(app: tauri::AppHandle, mobile_upload_state: tauri::State<MobileUploadState>) -> Result<MediaPayload, String> {
     let resources_dir = resources_dir(&app);
     let metadata_map = load_achievement_meta(&resources_dir);
+    let promotion_meta = load_promotion_meta(&resources_dir);
     let video_stems = collect_video_stems(&resources_dir);
     let mut entries_with_time: Vec<(MediaItem, u128)> = Vec::new();
+    let mut promotion_entries: Vec<(MediaItem, u128)> = Vec::new();
 
     for (media_type, folder, label, extensions) in media_types() {
         let dir = resources_dir.join(folder);
@@ -693,7 +847,336 @@ fn list_media(app: tauri::AppHandle) -> Result<MediaPayload, String> {
     entries_with_time.sort_by(|left, right| right.1.cmp(&left.1));
     let items = entries_with_time.into_iter().map(|value| value.0).collect();
 
-    Ok(MediaPayload { items })
+    let promo_dir = resources_dir.join(PROMOTION_FOLDER);
+    if promo_dir.exists() {
+        let entries = fs::read_dir(&promo_dir).map_err(|error| error.to_string())?;
+        let mut files: Vec<PathBuf> = entries
+            .filter_map(|entry| entry.ok().map(|value| value.path()))
+            .filter(|path| path.is_file())
+            .collect();
+        files.sort();
+
+        for path in files {
+            let extension = path
+                .extension()
+                .and_then(|ext| ext.to_str())
+                .unwrap_or_default()
+                .to_ascii_lowercase();
+            let Some(media_type) = media_type_for_extension(&extension) else {
+                continue;
+            };
+
+            let metadata = fs::metadata(&path).map_err(|error| error.to_string())?;
+            let name = path
+                .file_name()
+                .and_then(|name| name.to_str())
+                .unwrap_or_default()
+                .to_string();
+            let default_title = path
+                .file_stem()
+                .and_then(|name| name.to_str())
+                .unwrap_or_default()
+                .to_string();
+            let promo = promotion_meta.get(&name).cloned().unwrap_or_default();
+            let title = if promo.title.trim().is_empty() {
+                default_title
+            } else {
+                promo.title.clone()
+            };
+
+            let item = MediaItem {
+                name,
+                display_name: title.clone(),
+                r#type: media_type.to_string(),
+                type_label: "宣传物料".to_string(),
+                folder_label: "宣传物料".to_string(),
+                url: path.to_string_lossy().to_string(),
+                size: metadata.len(),
+                mime_type: mime_for_path(&path),
+                poster_url: if media_type == "video" {
+                    find_promotion_poster(&resources_dir, &path.file_name().and_then(|v| v.to_str()).unwrap_or_default().to_string())
+                } else {
+                    String::new()
+                },
+                achievement: AchievementMeta {
+                    title,
+                    owner: "宣传物料".to_string(),
+                    patent_no: String::new(),
+                    description: promo.description,
+                    created_at: promo.created_at,
+                },
+            };
+
+            let modified = metadata
+                .modified()
+                .ok()
+                .and_then(|value| value.duration_since(std::time::UNIX_EPOCH).ok())
+                .map(|value| value.as_millis())
+                .unwrap_or(0);
+            promotion_entries.push((item, modified));
+        }
+    }
+
+    promotion_entries.sort_by(|left, right| right.1.cmp(&left.1));
+    let promotions = promotion_entries.into_iter().map(|value| value.0).collect();
+
+    let port = mobile_upload_state.port.lock().map(|value| *value).unwrap_or(0);
+
+    Ok(MediaPayload {
+        items,
+        promotions,
+        mobile_upload: build_mobile_upload_config(port),
+    })
+}
+
+#[tauri::command]
+fn mobile_upload_config(mobile_upload_state: tauri::State<MobileUploadState>) -> Result<MobileUploadConfig, String> {
+    let port = mobile_upload_state.port.lock().map(|value| *value).unwrap_or(0);
+    Ok(build_mobile_upload_config(port))
+}
+
+fn find_subslice(haystack: &[u8], needle: &[u8]) -> Option<usize> {
+    haystack.windows(needle.len()).position(|window| window == needle)
+}
+
+fn parse_multipart(body: &[u8], boundary: &str) -> Result<(HashMap<String, String>, Option<(String, Vec<u8>)>), String> {
+    let marker = format!("--{boundary}").into_bytes();
+    let mut text_fields = HashMap::new();
+    let mut file_field = None;
+    let mut cursor = 0usize;
+
+    while cursor < body.len() {
+        let Some(start_rel) = find_subslice(&body[cursor..], &marker) else {
+            break;
+        };
+        let start = cursor + start_rel + marker.len();
+        if body.get(start..start + 2) == Some(b"--") {
+            break;
+        }
+
+        let part_start = if body.get(start..start + 2) == Some(b"\r\n") { start + 2 } else { start };
+        let Some(next_rel) = find_subslice(&body[part_start..], &marker) else {
+            break;
+        };
+        let mut part = &body[part_start..part_start + next_rel];
+        if part.ends_with(b"\r\n") {
+            part = &part[..part.len().saturating_sub(2)];
+        }
+
+        let Some(header_end) = find_subslice(part, b"\r\n\r\n") else {
+            cursor = part_start + next_rel;
+            continue;
+        };
+
+        let headers = String::from_utf8_lossy(&part[..header_end]);
+        let content = &part[header_end + 4..];
+        let disposition = headers
+            .lines()
+            .find(|line| line.to_ascii_lowercase().starts_with("content-disposition"))
+            .unwrap_or("");
+
+        let name = disposition
+            .split(';')
+            .find_map(|segment| segment.trim().strip_prefix("name=\"").and_then(|value| value.strip_suffix('"')))
+            .unwrap_or("")
+            .to_string();
+
+        let filename = disposition
+            .split(';')
+            .find_map(|segment| segment.trim().strip_prefix("filename=\"").and_then(|value| value.strip_suffix('"')))
+            .unwrap_or("")
+            .to_string();
+
+        if !filename.is_empty() {
+            file_field = Some((filename, content.to_vec()));
+        } else if !name.is_empty() {
+            text_fields.insert(name, String::from_utf8_lossy(content).trim().to_string());
+        }
+
+        cursor = part_start + next_rel;
+    }
+
+    Ok((text_fields, file_field))
+}
+
+fn json_response(status: &str, body: &str) -> Vec<u8> {
+    format!(
+        "HTTP/1.1 {status}\r\nContent-Type: application/json; charset=utf-8\r\nContent-Length: {}\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n{}",
+        body.as_bytes().len(),
+        body
+    )
+    .into_bytes()
+}
+
+fn html_response(body: &str) -> Vec<u8> {
+    format!(
+        "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {}\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n{}",
+        body.as_bytes().len(),
+        body
+    )
+    .into_bytes()
+}
+
+fn save_promotion_upload(resources: &Path, original_name: &str, data: &[u8], title: &str, description: &str) -> Result<(), String> {
+    if data.is_empty() {
+        return Err("上传文件内容为空".to_string());
+    }
+
+    let cleaned_name = normalize_filename(original_name);
+    let extension = Path::new(&cleaned_name)
+        .extension()
+        .and_then(|value| value.to_str())
+        .map(|value| value.to_ascii_lowercase())
+        .unwrap_or_default();
+
+    let media_type = media_type_for_extension(&extension).ok_or_else(|| "文件格式不受支持".to_string())?;
+    let target_dir = resources.join(PROMOTION_FOLDER);
+    fs::create_dir_all(&target_dir).map_err(|error| error.to_string())?;
+
+    let target_path = unique_file_path(&target_dir, &cleaned_name);
+    let mut file = fs::File::create(&target_path).map_err(|error| error.to_string())?;
+    file.write_all(data).map_err(|error| error.to_string())?;
+
+    let saved_name = target_path
+        .file_name()
+        .and_then(|value| value.to_str())
+        .unwrap_or_default()
+        .to_string();
+
+    if media_type == "video" {
+        try_generate_promotion_poster(resources, &target_path, &saved_name);
+    }
+
+    let fallback_title = target_path
+        .file_stem()
+        .and_then(|value| value.to_str())
+        .unwrap_or("宣传物料")
+        .to_string();
+
+    let mut meta = load_promotion_meta(resources);
+    meta.insert(
+        saved_name,
+        AchievementMeta {
+            title: if title.trim().is_empty() { fallback_title } else { title.trim().to_string() },
+            owner: "宣传物料".to_string(),
+            patent_no: String::new(),
+            description: description.trim().to_string(),
+            created_at: std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|value| value.as_secs().to_string())
+                .unwrap_or_default(),
+        },
+    );
+    save_promotion_meta(resources, &meta)?;
+    Ok(())
+}
+
+fn handle_mobile_upload_connection(app: &tauri::AppHandle, mut stream: TcpStream) -> Result<(), String> {
+    let _ = stream.set_read_timeout(Some(std::time::Duration::from_secs(5)));
+    let mut buffer = vec![0u8; 8192];
+    let mut received = Vec::new();
+
+    loop {
+        let read = stream.read(&mut buffer).map_err(|error| error.to_string())?;
+        if read == 0 {
+            break;
+        }
+        received.extend_from_slice(&buffer[..read]);
+        if find_subslice(&received, b"\r\n\r\n").is_some() {
+            break;
+        }
+    }
+
+    let Some(header_end) = find_subslice(&received, b"\r\n\r\n") else {
+        stream.write_all(&json_response("400 Bad Request", r#"{"ok":false,"error":"无效请求"}"#)).map_err(|error| error.to_string())?;
+        return Ok(());
+    };
+
+    let header_text = String::from_utf8_lossy(&received[..header_end]).to_string();
+    let mut lines = header_text.lines();
+    let request_line = lines.next().unwrap_or("");
+    let mut parts = request_line.split_whitespace();
+    let method = parts.next().unwrap_or("");
+    let path = parts.next().unwrap_or("/");
+
+    if method == "GET" && (path == "/" || path == "/mobile-upload.html") {
+        stream.write_all(&html_response(MOBILE_UPLOAD_HTML)).map_err(|error| error.to_string())?;
+        return Ok(());
+    }
+
+    if method == "POST" && path == "/api/promotions/upload" {
+        let content_length = header_text
+            .lines()
+            .find_map(|line| line.strip_prefix("Content-Length: "))
+            .and_then(|value| value.trim().parse::<usize>().ok())
+            .unwrap_or(0);
+        let content_type = header_text
+            .lines()
+            .find_map(|line| line.strip_prefix("Content-Type: "))
+            .unwrap_or("");
+        let boundary = content_type
+            .split(';')
+            .find_map(|segment| segment.trim().strip_prefix("boundary="))
+            .ok_or_else(|| "缺少 boundary".to_string())?;
+
+        while received.len() < header_end + 4 + content_length {
+            let read = stream.read(&mut buffer).map_err(|error| error.to_string())?;
+            if read == 0 {
+                break;
+            }
+            received.extend_from_slice(&buffer[..read]);
+        }
+
+        let body_end = std::cmp::min(received.len(), header_end + 4 + content_length);
+        let body = &received[header_end + 4..body_end];
+        let (fields, file_field) = parse_multipart(body, boundary)?;
+        let Some((file_name, file_bytes)) = file_field else {
+            stream.write_all(&json_response("400 Bad Request", r#"{"ok":false,"error":"请上传宣传物料文件"}"#)).map_err(|error| error.to_string())?;
+            return Ok(());
+        };
+
+        let resources = resources_dir(app);
+        match save_promotion_upload(
+            &resources,
+            &file_name,
+            &file_bytes,
+            fields.get("title").map(String::as_str).unwrap_or(""),
+            fields.get("description").map(String::as_str).unwrap_or(""),
+        ) {
+            Ok(_) => {
+                stream.write_all(&json_response("200 OK", r#"{"ok":true}"#)).map_err(|error| error.to_string())?;
+            }
+            Err(error) => {
+                let body = serde_json::json!({ "ok": false, "error": error }).to_string();
+                stream.write_all(&json_response("400 Bad Request", &body)).map_err(|error| error.to_string())?;
+            }
+        }
+        return Ok(());
+    }
+
+    stream
+        .write_all(&json_response("404 Not Found", r#"{"ok":false,"error":"Not found"}"#))
+        .map_err(|error| error.to_string())?;
+    Ok(())
+}
+
+fn start_mobile_upload_server(app: tauri::AppHandle, state: tauri::State<MobileUploadState>) -> Result<(), String> {
+    let listener = TcpListener::bind("0.0.0.0:0").map_err(|error| error.to_string())?;
+    let port = listener.local_addr().map_err(|error| error.to_string())?.port();
+    if let Ok(mut saved_port) = state.port.lock() {
+        *saved_port = port;
+    }
+
+    std::thread::spawn(move || {
+        for incoming in listener.incoming() {
+            let Ok(stream) = incoming else {
+                continue;
+            };
+            let _ = handle_mobile_upload_connection(&app, stream);
+        }
+    });
+
+    Ok(())
 }
 
 #[tauri::command]
@@ -871,9 +1354,11 @@ fn delete_achievement(app: tauri::AppHandle, file_name: String) -> Result<Action
 fn main() {
     tauri::Builder::default()
         .manage(PortalStore::default())
+        .manage(MobileUploadState::default())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             initialize_resources(&app.handle())?;
+            start_mobile_upload_server(app.handle().clone(), app.state::<MobileUploadState>())?;
             let handle = app.handle().clone();
             tauri::WebviewWindowBuilder::new(app, "main", tauri::WebviewUrl::App("index.html".into()))
                 .title("天津知识产权交易中心触摸屏展示软件")
@@ -942,6 +1427,7 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             list_media,
+            mobile_upload_config,
             upload_achievement,
             update_achievement_meta,
             delete_achievement,

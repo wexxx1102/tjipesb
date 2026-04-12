@@ -5,6 +5,7 @@ import mimetypes
 import os
 import re
 import shutil
+import socket
 import subprocess
 import sys
 import tempfile
@@ -14,6 +15,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import quote, urlparse
 
 
+BIND_HOST = "0.0.0.0"
 HOST = "127.0.0.1"
 PORT = 8000
 if getattr(sys, "frozen", False):
@@ -23,6 +25,9 @@ else:
 RESOURCE_ROOT = os.path.join(BASE_DIR, "resources")
 ACHIEVEMENT_META_FILE = os.path.join(RESOURCE_ROOT, "achievement_meta.json")
 POSTER_DIR = os.path.join(RESOURCE_ROOT, "posters")
+PROMOTION_DIR = os.path.join(RESOURCE_ROOT, "promotions")
+PROMOTION_META_FILE = os.path.join(RESOURCE_ROOT, "promotion_meta.json")
+PROMOTION_POSTER_DIR = os.path.join(RESOURCE_ROOT, "promotion_posters")
 
 MEDIA_FOLDERS = {
     "video": {
@@ -46,6 +51,7 @@ MEDIA_FOLDERS = {
 }
 
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"}
+PROMOTION_EXTENSIONS = set().union(*(config["extensions"] for config in MEDIA_FOLDERS.values()))
 
 
 def quoted_resource_url(path: str) -> str:
@@ -87,6 +93,27 @@ def load_achievement_meta() -> dict:
 def save_achievement_meta(payload: dict):
     os.makedirs(RESOURCE_ROOT, exist_ok=True)
     with open(ACHIEVEMENT_META_FILE, "w", encoding="utf-8") as file:
+        json.dump(payload, file, ensure_ascii=False, indent=2)
+
+
+def load_promotion_meta() -> dict:
+    if not os.path.isfile(PROMOTION_META_FILE):
+        return {}
+
+    try:
+        with open(PROMOTION_META_FILE, "r", encoding="utf-8") as file:
+            payload = json.load(file)
+            if isinstance(payload, dict):
+                return payload
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+    return {}
+
+
+def save_promotion_meta(payload: dict):
+    os.makedirs(RESOURCE_ROOT, exist_ok=True)
+    with open(PROMOTION_META_FILE, "w", encoding="utf-8") as file:
         json.dump(payload, file, ensure_ascii=False, indent=2)
 
 
@@ -135,6 +162,18 @@ def find_video_poster(video_name: str) -> str:
     return ""
 
 
+def find_promotion_poster(file_name: str) -> str:
+    stem = os.path.splitext(file_name)[0]
+
+    if os.path.isdir(PROMOTION_POSTER_DIR):
+        for extension in sorted(IMAGE_EXTENSIONS):
+            candidate = os.path.join(PROMOTION_POSTER_DIR, f"{stem}{extension}")
+            if os.path.isfile(candidate):
+                return quoted_resource_url(candidate)
+
+    return ""
+
+
 def save_video_poster(saved_video_name: str, poster_field):
     if not saved_video_name or poster_field is None:
         return
@@ -158,6 +197,117 @@ def save_video_poster(saved_video_name: str, poster_field):
     poster_path = os.path.join(POSTER_DIR, f"{stem}.jpg")
     with open(poster_path, "wb") as output:
         output.write(poster_data)
+
+
+def save_promotion_video_poster(saved_video_name: str, file_bytes: bytes):
+    if not saved_video_name or not file_bytes:
+        return
+
+    os.makedirs(PROMOTION_POSTER_DIR, exist_ok=True)
+    stem = os.path.splitext(saved_video_name)[0]
+    temp_video_path = os.path.join(PROMOTION_DIR, saved_video_name)
+    poster_path = os.path.join(PROMOTION_POSTER_DIR, f"{stem}.jpg")
+
+    commands = [
+        ["ffmpeg", "-y", "-ss", "0.20", "-i", temp_video_path, "-frames:v", "1", "-q:v", "2", poster_path],
+        ["ffmpeg", "-y", "-i", temp_video_path, "-frames:v", "1", "-q:v", "2", poster_path],
+    ]
+
+    for command in commands:
+        try:
+            completed = subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+            if completed.returncode == 0 and os.path.isfile(poster_path) and os.path.getsize(poster_path) > 0:
+                return
+        except OSError:
+            break
+
+
+def build_promotion_items() -> list:
+    metadata_map = load_promotion_meta()
+    items = []
+
+    if not os.path.isdir(PROMOTION_DIR):
+        return items
+
+    entries = [entry for entry in os.scandir(PROMOTION_DIR) if entry.is_file()]
+    entries.sort(key=lambda item: item.stat().st_mtime, reverse=True)
+
+    for entry in entries:
+        extension = os.path.splitext(entry.name)[1].lower()
+        if extension not in PROMOTION_EXTENSIONS:
+            continue
+
+        media_type = media_type_for_extension(extension)
+        if not media_type:
+            continue
+
+        mime_type = mimetypes.guess_type(entry.name)[0] or "application/octet-stream"
+        meta = metadata_map.get(entry.name, {})
+        title = str(meta.get("title", "")).strip() or os.path.splitext(entry.name)[0]
+        description = str(meta.get("description", "")).strip()
+
+        items.append(
+            {
+                "name": entry.name,
+                "displayName": title,
+                "type": media_type,
+                "typeLabel": "宣传物料",
+                "folderLabel": "宣传物料",
+                "url": quoted_resource_url(entry.path),
+                "size": entry.stat().st_size,
+                "mimeType": mime_type,
+                "posterUrl": find_promotion_poster(entry.name) if media_type == "video" else "",
+                "achievement": {
+                    "title": title,
+                    "owner": "宣传物料",
+                    "patentNo": "",
+                    "description": description,
+                    "createdAt": str(meta.get("createdAt", "")),
+                },
+                "_sortKey": entry.stat().st_mtime,
+            }
+        )
+
+    items.sort(key=lambda item: item.get("_sortKey", 0), reverse=True)
+    for item in items:
+        item.pop("_sortKey", None)
+
+    return items
+
+
+def resolve_lan_ip() -> str:
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+            sock.connect(("8.8.8.8", 80))
+            ip = sock.getsockname()[0]
+            if ip and not ip.startswith("127."):
+                return ip
+    except OSError:
+        pass
+
+    try:
+        hostname = socket.gethostname()
+        ip = socket.gethostbyname(hostname)
+        if ip and not ip.startswith("127."):
+            return ip
+    except OSError:
+        pass
+
+    return HOST
+
+
+def mobile_upload_config() -> dict:
+    lan_ip = resolve_lan_ip()
+    upload_url = f"http://{lan_ip}:{PORT}/mobile-upload.html"
+    qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=280x280&data={quote(upload_url, safe='')}"
+    available = bool(lan_ip and not lan_ip.startswith("127."))
+    return {
+        "uploadPageUrl": upload_url,
+        "qrImageUrl": qr_url if available else "",
+        "displayHost": lan_ip,
+        "available": available,
+        "reason": "" if available else "当前设备未获取到可供手机访问的局域网地址，请连接局域网后刷新。",
+    }
 
 
 def poster_exists_for_video(video_name: str) -> bool:
@@ -325,12 +475,18 @@ class TouchscreenHandler(SimpleHTTPRequestHandler):
             self.send_json(
                 {
                     "items": build_media_items(),
+                    "promotions": build_promotion_items(),
+                    "mobileUpload": mobile_upload_config(),
                     "folders": {
                         media_type: os.path.join("resources", config["directory"])
                         for media_type, config in MEDIA_FOLDERS.items()
                     },
                 }
             )
+            return
+
+        if parsed.path == "/api/mobile-upload-config":
+            self.send_json(mobile_upload_config())
             return
 
         return super().do_GET()
@@ -414,6 +570,54 @@ class TouchscreenHandler(SimpleHTTPRequestHandler):
             self.send_json({"ok": True})
             return
 
+        if parsed.path == "/api/promotions/upload":
+            content_type = self.headers.get("Content-Type", "")
+            if not content_type.startswith("multipart/form-data"):
+                self.send_json({"ok": False, "error": "仅支持 multipart/form-data"}, HTTPStatus.BAD_REQUEST)
+                return
+
+            form = cgi.FieldStorage(
+                fp=self.rfile,
+                headers=self.headers,
+                environ={
+                    "REQUEST_METHOD": "POST",
+                    "CONTENT_TYPE": content_type,
+                },
+            )
+
+            upload_file = form["file"] if "file" in form else None
+            if upload_file is None or not getattr(upload_file, "filename", ""):
+                self.send_json({"ok": False, "error": "请上传宣传物料文件"}, HTTPStatus.BAD_REQUEST)
+                return
+
+            raw_filename = normalize_filename(upload_file.filename)
+            extension = os.path.splitext(raw_filename)[1].lower()
+            media_type = media_type_for_extension(extension)
+            if not media_type:
+                self.send_json({"ok": False, "error": "文件格式不受支持"}, HTTPStatus.BAD_REQUEST)
+                return
+
+            os.makedirs(PROMOTION_DIR, exist_ok=True)
+            saved_path = unique_file_path(PROMOTION_DIR, raw_filename)
+            with open(saved_path, "wb") as target:
+                data = upload_file.file.read()
+                target.write(data)
+
+            saved_name = os.path.basename(saved_path)
+            if media_type == "video":
+                save_promotion_video_poster(saved_name, data)
+
+            meta = load_promotion_meta()
+            meta[saved_name] = {
+                "title": form.getfirst("title", "").strip() or os.path.splitext(saved_name)[0],
+                "description": form.getfirst("description", "").strip(),
+                "createdAt": datetime.now().isoformat(timespec="seconds"),
+            }
+            save_promotion_meta(meta)
+
+            self.send_json({"ok": True, "fileName": saved_name, "mediaType": media_type})
+            return
+
         if parsed.path != "/api/achievements/upload":
             self.send_json({"ok": False, "error": "Not found"}, HTTPStatus.NOT_FOUND)
             return
@@ -491,7 +695,9 @@ class TouchscreenHandler(SimpleHTTPRequestHandler):
 
 def create_server():
     os.chdir(BASE_DIR)
-    return ThreadingHTTPServer((HOST, PORT), TouchscreenHandler)
+    os.makedirs(PROMOTION_DIR, exist_ok=True)
+    os.makedirs(PROMOTION_POSTER_DIR, exist_ok=True)
+    return ThreadingHTTPServer((BIND_HOST, PORT), TouchscreenHandler)
 
 
 def run():
